@@ -1,0 +1,276 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Papain 3D Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a lab bench — the 3D model is the bench, missions are the protocol sheet beside it (stacks on phones) */
+:root{
+  --bg:#F4F7F3; --panel:#FFFFFF; --ink:#14221C; --muted:#5A6B63; --line:#D9E2DC;
+  --leaf:#0B6E4F; --leaf-soft:#E2F1EA; --papaya:#E9792F; --papaya-soft:#FCEBDD; --stage:#FFFFFF;
+  --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1613; --panel:#16201C; --ink:#E6EEE9; --muted:#9BB0A6; --line:#2A3832;
+  --leaf:#4FC39A; --leaf-soft:#173229; --papaya:#F39A5C; --papaya-soft:#3A2618; --stage:#0B110F; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1613; --panel:#16201C; --ink:#E6EEE9; --muted:#9BB0A6; --line:#2A3832;
+  --leaf:#4FC39A; --leaf-soft:#173229; --papaya:#F39A5C; --papaya-soft:#3A2618; --stage:#0B110F; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:14px;box-sizing:border-box}
+*{box-sizing:border-box}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-bottom:12px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(1.5rem,3.2vw,2.2rem);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 span{color:var(--papaya)}
+.sub{color:var(--muted);font-size:.92rem}
+.wrap{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.wrap{grid-template-columns:1fr}}
+.stagebox{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:14px;overflow:hidden;aspect-ratio:4/3;max-width:100%}
+#viewer{position:absolute;inset:0}
+.legend{position:absolute;left:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:6px;max-width:calc(100% - 20px);pointer-events:none}
+.chip{font-size:.75rem;padding:3px 8px;border-radius:99px;background:var(--panel);border:1px solid var(--line);display:inline-flex;align-items:center;gap:6px}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.pick{position:absolute;right:10px;top:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:.85rem;max-width:62%}
+.pick b{font-family:var(--f-mono)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+button{font:inherit;cursor:pointer}
+.tbtn{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:.85rem}
+.tbtn:hover{border-color:var(--leaf)}
+.tbtn[aria-pressed="true"]{background:var(--leaf);color:var(--panel);border-color:var(--leaf)}
+:focus-visible{outline:3px solid var(--papaya);outline-offset:2px}
+.missions{display:flex;flex-direction:column;gap:10px;min-width:0}
+.mlist{display:flex;flex-wrap:wrap;gap:6px}
+.mbtn{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:99px;padding:5px 11px;font-size:.82rem;display:inline-flex;gap:6px;align-items:center}
+.mbtn .n{font-family:var(--f-mono);color:var(--muted)}
+.mbtn[aria-current="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.mbtn[aria-current="true"] .n{color:var(--papaya)}
+.mbtn.done::after{content:"✓";color:var(--leaf);font-weight:700}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--leaf);font-weight:600}
+.card h2{font-family:var(--f-display);font-weight:600;font-size:1.35rem;margin:4px 0 8px;text-wrap:balance}
+.card p{margin:0 0 10px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:12px 0}
+.fact{background:var(--leaf-soft);border-radius:10px;padding:8px 10px}
+.fact .v{font-family:var(--f-mono);font-size:1.05rem;font-variant-numeric:tabular-nums}
+.fact .k{font-size:.75rem;color:var(--muted)}
+.task{border-left:3px solid var(--papaya);background:var(--papaya-soft);padding:10px 12px;border-radius:0 10px 10px 0;margin:10px 0}
+.task b{color:var(--papaya)}
+.q{margin-top:12px}
+.q .qt{font-weight:600}
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.opt{text-align:left;background:var(--bg);border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:8px 10px}
+.opt.right{border-color:var(--leaf);background:var(--leaf-soft)}
+.opt.wrong{border-color:var(--papaya);background:var(--papaya-soft)}
+.why{margin-top:8px;font-size:.92rem;color:var(--ink)}
+.navrow{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
+footer{margin-top:14px;font-size:.78rem;color:var(--muted)}
+footer a{color:var(--leaf)}
+.load{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:.9rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head><body><header>
+  <h1>Papain <span>3D</span> Lab</h1>
+  <div class="sub">SBS 3073 Bioinformatics · Chapter 5 · real structures from the Protein Data Bank and AlphaFold</div>
+</header>
+
+<div class="wrap">
+  <section>
+    <div class="stagebox">
+      <div id="viewer" role="img" aria-label="Interactive 3D protein model"></div>
+      <div class="load" id="load">Loading the 3D viewer…</div>
+      <div class="legend" id="legend"></div>
+      <div class="pick" id="pick">Tap or click any part of the protein to name the residue.</div>
+    </div>
+    <div class="tools">
+      <button class="tbtn" id="spin" aria-pressed="false">Spin</button>
+      <button class="tbtn" id="reset">Reset view</button>
+      <button class="tbtn" id="labels" aria-pressed="true">Labels</button>
+    </div>
+  </section>
+
+  <section class="missions">
+    <nav class="mlist" id="mlist" aria-label="Missions"></nav>
+    <article class="card" id="card"></article>
+    <div class="navrow">
+      <button class="tbtn" id="prev">← Previous</button>
+      <button class="tbtn" id="next">Next mission →</button>
+    </div>
+  </section>
+</div>
+
+<footer>
+  Structures are downloaded live from RCSB PDB and the AlphaFold Database. Structures: PDB 9PAP (papain, X-ray 1.65 Å), 1PE6 (papain + E-64-c, 2.1 Å), 3TNX (propapain, thermostable variant, 2.62 Å), AlphaFold AF-P02668 (κ-casein). Mature-enzyme numbering unless stated; UniProt precursor numbering is shown when you click a residue. Viewer: 3Dmol.js.
+  <a href="https://www.rcsb.org/structure/9PAP" target="_blank" rel="noopener">Open 9PAP at RCSB</a>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/3Dmol/2.4.2/3Dmol-min.js"></script>
+<script>
+(function(){
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const S={};const PDB=id=>S[id];
+const L=[];for(let i=10;i<=111;i++)L.push(i);[208,209,210,211,212].forEach(i=>L.push(i));
+const R=[];for(let i=1;i<=9;i++)R.push(i);for(let i=112;i<=207;i++)R.push(i);
+const PRO=[];for(let i=10;i<=107;i++)PRO.push(i);
+const AA={ALA:'Ala',ARG:'Arg',ASN:'Asn',ASP:'Asp',CYS:'Cys',OCS:'Cys*',GLN:'Gln',GLU:'Glu',GLY:'Gly',HIS:'His',ILE:'Ile',LEU:'Leu',LYS:'Lys',MET:'Met',PHE:'Phe',PRO:'Pro',SER:'Ser',THR:'Thr',TRP:'Trp',TYR:'Tyr',VAL:'Val'};
+const KIND={LYS:'positive',ARG:'positive',HIS:'positive (weak)',ASP:'negative',GLU:'negative',ALA:'hydrophobic',VAL:'hydrophobic',LEU:'hydrophobic',ILE:'hydrophobic',MET:'hydrophobic',PHE:'hydrophobic',TRP:'hydrophobic',PRO:'special (helix breaker)',GLY:'special (flexible)',CYS:'special (can form S–S)',OCS:'oxidised cysteine'};
+let viewer=null,cur=0,spinning=false,showLabels=true,done=new Set();
+const C={helix:'#E4572E',sheet:'#3A8FD6',coil:'#B8BEC6',L:'#3A8FD6',R:'#E4572E',cys:'#2E9E3E',his:'#1E8FA0',asn:'#D9822B',pos:'#3A6FD6',neg:'#D9452E',hyd:'#E8D3A2',pol:'#F2F2EE',pro:'#F2B134',mat:'#0E7C7B'};
+const ssColor=a=>a.ss==='h'?C.helix:(a.ss==='s'?C.sheet:C.coil);
+function surfColor(a){if(/^(LYS|ARG|HIS)$/.test(a.resn))return C.pos;if(/^(ASP|GLU)$/.test(a.resn))return C.neg;if(/^(ALA|VAL|LEU|ILE|MET|PHE|TRP|PRO|TYR)$/.test(a.resn))return C.hyd;return C.pol;}
+function plddt(a){return a.b>90?'#0053D6':(a.b>70?'#65CBF3':(a.b>50?'#FFDB13':'#FF7D45'));}
+function lab(v,txt,sel,color){if(!showLabels)return;const a=v.getModel().selectedAtoms(sel)[0];if(!a)return;v.addLabel(txt,{position:a,fontSize:13,fontColor:'#ffffff',backgroundColor:color,backgroundOpacity:0.92,borderThickness:0,inFront:true});}
+function dist(v,s1,s2,txt){const m=v.getModel();const p=m.selectedAtoms(s1)[0],q=m.selectedAtoms(s2)[0];if(!p||!q)return;v.addCylinder({start:p,end:q,radius:0.08,color:'#101B2D',dashed:true,dashLength:0.25,gapLength:0.15});if(showLabels)v.addLabel(txt,{position:{x:(p.x+q.x)/2,y:(p.y+q.y)/2,z:(p.z+q.z)/2},fontSize:13,fontColor:'#101B2D',backgroundColor:'#F2B134',backgroundOpacity:0.95,borderThickness:0,inFront:true});}
+const triad=v=>{v.addStyle({resi:25},{stick:{colorscheme:'greenCarbon',radius:0.3}});v.addStyle({resi:159},{stick:{colorscheme:'cyanCarbon',radius:0.3}});v.addStyle({resi:175},{stick:{colorscheme:'orangeCarbon',radius:0.3}});};
+const legend=items=>document.getElementById('legend').innerHTML=items.map(i=>`<span class="chip"><i style="background:${i[0]}"></i>${i[1]}</span>`).join('');
+
+const M=[
+ {id:'whole',name:'The whole enzyme',model:'papain',num:{mat:0,pre:133},
+  draw:v=>{v.setStyle({},{});v.setStyle({hetflag:false},{cartoon:{color:'spectrum'}});v.addStyle({resn:'OCS'},{cartoon:{color:'spectrum'}});lab(v,'N-terminus (Ile1)',{resi:1,atom:'CA'},'#3A3FD6');lab(v,'C-terminus (Asn212)',{resi:212,atom:'CA'},'#D9452E');},
+  legend:[['linear-gradient(90deg,#3a3fd6,#2fc46b,#f2d02b,#e4572e)','N-terminus → C-terminus']],
+  text:'This is mature papain from papaya latex: one chain of 212 amino acids, solved by X-ray crystallography at 1.65 Å (PDB 9PAP). The colour runs like a rainbow from the first residue (blue) to the last (red).',
+  facts:[['212','residues'],['23.4 kDa','mass'],['1.65 Å','resolution'],['21 Å','N-to-C distance']],
+  task:'Drag to rotate, pinch or scroll to zoom. Follow the rainbow from blue to red with your eyes. Does the chain go straight, or fold back on itself many times?',
+  q:'The N- and C-termini are 21 Å apart, while the protein is about 50 Å across. What does that tell you?',
+  o:['The chain is fully stretched out','The chain folds back so its two ends end up fairly close','The protein has two separate chains'],a:1,
+  why:'A stretched 212-residue chain would be about 750 Å long. Folding packs it into a compact globule, so the two ends finish near each other.'},
+ {id:'domains',name:'Two domains',model:'papain',num:{mat:0,pre:133},
+  draw:v=>{v.setStyle({},{});v.setStyle({resi:L},{cartoon:{color:C.L}});v.setStyle({resi:R},{cartoon:{color:C.R}});triad(v);lab(v,'L-domain',{resi:70,atom:'CA'},C.L);lab(v,'R-domain',{resi:150,atom:'CA'},C.R);},
+  legend:[[C.L,'L-domain (left)'],[C.R,'R-domain (right)'],['#2E9E3E','active site']],
+  text:'Papain folds into two parts. The L-domain (residues 10–111 and 208–212) is built mainly from α-helices. The R-domain (1–9 and 112–207) is a β-barrel. The active site sits in the groove between them.',
+  facts:[['49 : 13','L helix : strand residues'],['17 : 38','R helix : strand residues']],
+  task:'Rotate until you look straight into the groove between blue and orange. That groove is where meat proteins are cut.',
+  q:'Cys25 is in one domain and His159 in the other. Why might the enzyme need both domains?',
+  o:['Each domain is a separate enzyme','The catalytic residues only meet where the two domains touch','The R-domain stores the protein for later'],a:1,
+  why:'Cys25 (L-domain) and His159 (R-domain) are 134 residues apart in sequence. Only the folded two-domain structure brings them together.'},
+ {id:'ss',name:'Helices and strands',model:'papain',num:{mat:0,pre:133},
+  draw:v=>{v.setStyle({},{});v.setStyle({hetflag:false},{cartoon:{colorfunc:ssColor,arrows:true}});v.addStyle({resn:'OCS'},{cartoon:{colorfunc:ssColor}});},
+  legend:[[C.helix,'α-helix'],[C.sheet,'β-strand'],[C.coil,'turn / coil']],
+  text:'Secondary structure from the crystal file: red α-helices, blue β-strands with arrows, grey loops. In the mature enzyme about 31% of residues are helix and 24% strand (UniProt features).',
+  facts:[['31%','helix'],['24%','strand'],['45%','loops & turns']],
+  task:'Click a residue in a helix, then one in a strand. Note their names. Loops often contain Gly and Pro.',
+  q:'Which domain is rich in β-strands?',o:['L-domain','R-domain','Neither'],a:1,
+  why:'The R-domain is a β-barrel (38 strand vs 17 helix residues). The L-domain is mostly helical.'},
+ {id:'triad',name:'Catalytic triad',model:'papain',num:{mat:0,pre:133},focus:{resi:[25,159,175]},
+  draw:v=>{v.setStyle({},{});v.setStyle({hetflag:false},{cartoon:{color:'#D5DAE0',opacity:0.6}});triad(v);dist(v,{resi:25,atom:'SG'},{resi:159,atom:'ND1'},'3.65 Å');dist(v,{resi:159,atom:'NE2'},{resi:175,atom:'OD1'},'2.77 Å');lab(v,'Cys25',{resi:25,atom:'N'},'#2E9E3E');lab(v,'His159',{resi:159,atom:'CA'},'#1E8FA0');lab(v,'Asn175',{resi:175,atom:'CA'},'#D9822B');},
+  legend:[['#2E9E3E','Cys25 (nucleophile)'],['#1E8FA0','His159 (base)'],['#D9822B','Asn175 (holds His)']],
+  text:'Three residues far apart in sequence (25, 159, 175) meet in 3D. The sulfur of Cys25 attacks the peptide bond; His159 shuttles a proton; Asn175 keeps His159 in position. Distances below were measured on this structure.',
+  facts:[['3.65 Å','Cys25 S – His159 N'],['2.77 Å','His159 N – Asn175 O']],
+  task:'Look closely at Cys25: its sulfur carries three extra oxygens. In this crystal Cys25 was oxidised to a sulfonic acid.',
+  q:'Oxidised Cys25 cannot attack a peptide bond. What do labs add to papain powder before use?',o:['Salt','A reducing agent such as cysteine (with EDTA)','Sugar'],a:1,
+  why:'Reducing agents return Cys25 to its free –SH form. The oxidised Cys in 9PAP shows exactly why commercial papain must be activated.'},
+ {id:'ss2',name:'Disulfide bridges',model:'papain',num:{mat:0,pre:133},
+  draw:v=>{v.setStyle({},{});v.setStyle({hetflag:false},{cartoon:{color:'#D5DAE0'}});v.addStyle({resi:[22,63,56,95,153,200]},{stick:{colorscheme:'yellowCarbon',radius:0.3}});v.addStyle({resi:[22,63,56,95,153,200],atom:'SG'},{sphere:{color:'#F2B134',radius:0.75}});v.addStyle({resi:25},{stick:{colorscheme:'greenCarbon',radius:0.3}});lab(v,'22–63',{resi:22,atom:'SG'},'#B07A00');lab(v,'56–95',{resi:95,atom:'SG'},'#B07A00');lab(v,'153–200',{resi:153,atom:'SG'},'#B07A00');},
+  legend:[['#F2B134','S–S bridges'],['#2E9E3E','free Cys25']],
+  text:'Three disulfide bonds (Cys22–Cys63, Cys56–Cys95, Cys153–Cys200) lock the fold. Each S–S bond in this file measures about 2.05 Å. They help papain keep working at warm cooking temperatures.',
+  facts:[['3','S–S bonds'],['7','Cys in total'],['2.05 Å','S–S length']],
+  task:'Find the yellow sulfur pairs. Which domains do they sit in?',
+  q:'Papain has 7 cysteines. How many are NOT in a disulfide?',o:['0','1','3'],a:1,
+  why:'Six cysteines form three bridges. The seventh is Cys25, which must stay free to cut proteins.'},
+ {id:'surface',name:'Surface charge',model:'papain',num:{mat:0,pre:133},surface:true,
+  draw:v=>{v.setStyle({},{});v.setStyle({hetflag:false},{cartoon:{color:'#D5DAE0'}});v.addSurface($3Dmol.SurfaceType.VDW,{opacity:1,colorfunc:surfColor},{hetflag:false});},
+  legend:[[C.pos,'Lys / Arg / His (+)'],[C.neg,'Asp / Glu (–)'],[C.hyd,'hydrophobic'],[C.pol,'polar']],
+  text:'This is what other molecules “see”: the water-accessible surface, coloured by side-chain type. The ProtParam pI of 8.88 predicts a positively charged enzyme at food pH.',
+  facts:[['8.88','pI (ProtParam)'],['22','Lys + Arg'],['16','Asp + Glu']],
+  task:'Rotate all the way round. Is there more blue or more red? Then find the groove in the middle: that is the active-site cleft.',
+  q:'At milk pH 6.7, papain carries a net charge of about +6. Milk caseins are negative. What happens?',o:['They repel each other','They attract each other','Nothing: charge does not matter'],a:1,
+  why:'Opposite charges attract, so papain binds to casein and other acidic food proteins easily. Charge also decides which ion-exchange column you use to purify it.'},
+ {id:'e64',name:'Inhibitor in the cleft',model:'e64',num:{mat:0,pre:133},surface:true,focus:{resn:'E6C'},
+  draw:v=>{v.setStyle({},{});v.setStyle({hetflag:false},{cartoon:{color:'#D5DAE0'}});v.addSurface($3Dmol.SurfaceType.VDW,{opacity:0.95,colorfunc:a=>a.resi==25?'#2E9E3E':(a.resi==159?'#1E8FA0':'#E7EBEE')},{hetflag:false});v.addStyle({resn:'E6C'},{stick:{colorscheme:'magentaCarbon',radius:0.3}});lab(v,'E-64-c',{resn:'E6C'},'#A3229B');},
+  legend:[['#C030C0','E-64-c inhibitor'],['#2E9E3E','Cys25'],['#1E8FA0','His159']],
+  text:'PDB 1PE6: papain with the inhibitor E-64-c (a close analogue of E-64 from the mould Aspergillus japonicus) lying in the cleft. Its reactive carbon is bonded to the sulfur of Cys25 (1.8 Å, a covalent bond). A protein chain being cut lies in the same groove.',
+  facts:[['2.1 Å','resolution'],['0.24 Å','RMSD vs 9PAP'],['1.8 Å','C–S bond to Cys25']],
+  task:'Zoom into the magenta molecule. Follow it along the groove to the green Cys25.',
+  q:'Why are E-64 type inhibitors used in food and lab work?',o:['To make papain work faster','To switch cysteine proteases off completely','To colour the enzyme'],a:1,
+  why:'A covalent bond to Cys25 blocks the active site permanently. E-64 is used to stop protease activity, for example when protecting other proteins during extraction.'},
+ {id:'pro',name:'The propeptide lid',model:'pro',num:{mat:107,pre:-26},
+  draw:v=>{v.setStyle({},{});v.setStyle({hetflag:false},{cartoon:{color:C.mat}});v.setStyle({resi:PRO},{cartoon:{color:'#F2B134'}});v.addStyle({resi:[132,266]},{stick:{colorscheme:'greenCarbon',radius:0.35}});lab(v,'propeptide',{resi:40,atom:'CA'},'#B07A00');lab(v,'mature enzyme',{resi:230,atom:'CA'},C.mat);},
+  legend:[['#F2B134','propeptide (inactive form)'],[C.mat,'future mature papain'],['#2E9E3E','Cys25, His159']],
+  text:'PDB 3TNX: the precursor “propapain” (a thermostable variant). The gold propeptide wraps across the active-site cleft like a lid. The teal part already has the final shape: it overlays 9PAP with an RMSD of 0.45 Å over 211 Cα atoms.',
+  facts:[['98','propeptide residues seen'],['0.45 Å','RMSD to mature'],['2.62 Å','resolution']],
+  task:'Find the green active-site residues under the gold lid. This is why the precursor cannot digest the papaya cell that makes it.',
+  q:'What must happen before papain becomes active?',o:['The propeptide must be cut off','A second chain must bind','It must be heated to 100 °C'],a:0,
+  why:'Removing the propeptide (UniProt residues 19–133) opens the cleft. Chymosin uses the same zymogen trick.'},
+ {id:'kcas',name:'κ-casein: no fixed fold',model:'kcas',num:{mat:21,pre:0},
+  draw:v=>{v.setStyle({},{cartoon:{colorfunc:plddt,thickness:0.8}});v.addStyle({resi:[126,127]},{stick:{colorscheme:'Jmol',radius:0.35}});lab(v,'Phe105–Met106 (chymosin cut)',{resi:126,atom:'CA'},'#101B2D');},
+  legend:[['#0053D6','very high (>90)'],['#65CBF3','confident (70–90)'],['#FFDB13','low (50–70)'],['#FF7D45','very low (<50)']],
+  text:'AlphaFold model of cow κ-casein, coloured by confidence (pLDDT). Almost the whole mature protein scores around 50: AlphaFold cannot find a stable fold because κ-casein is intrinsically disordered. Do not read this loopy shape as real.',
+  facts:[['≈50','mean pLDDT, mature chain'],['78','signal peptide'],['169','mature residues']],
+  task:'Click residues along the chain. Most are low-confidence orange or yellow. Find the chymosin cut site.',
+  q:'Why is a disordered region a good target for chymosin?',o:['It is buried and protected','It is flexible and exposed, so the enzyme can reach it','It is rich in disulfide bonds'],a:1,
+  why:'The flexible, exposed C-terminal part is easy to reach. One cut at Phe105–Met106 removes the “hairs” from casein micelles, and milk starts to curdle.'}
+];
+
+function init(){
+  document.getElementById('load').hidden=true;
+  viewer=$3Dmol.createViewer(document.getElementById('viewer'),{backgroundColor:css('--stage'),antialias:true});
+  viewer.setClickable({},true,pick);
+  document.getElementById('mlist').innerHTML=M.map((m,i)=>`<button class="mbtn" id="m-${m.id}" data-i="${i}"><span class="n">${i+1}</span>${m.name}</button>`).join('');
+  document.querySelectorAll('.mbtn').forEach(b=>b.addEventListener('click',()=>go(+b.dataset.i)));
+  document.getElementById('prev').onclick=()=>go((cur+M.length-1)%M.length);
+  document.getElementById('next').onclick=()=>go((cur+1)%M.length);
+  document.getElementById('reset').onclick=()=>{fit(M[cur]);viewer.render();};
+  document.getElementById('spin').onclick=e=>{spinning=!spinning;e.currentTarget.setAttribute('aria-pressed',spinning);viewer.spin(spinning?'y':false);};
+  document.getElementById('labels').onclick=e=>{showLabels=!showLabels;e.currentTarget.setAttribute('aria-pressed',showLabels);go(cur,true);};
+  const mq=window.matchMedia('(prefers-color-scheme: dark)');const retheme=()=>{viewer.setBackgroundColor(css('--stage'));viewer.render();};
+  mq.addEventListener&&mq.addEventListener('change',retheme);new MutationObserver(retheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  let start=0;const h=(location.hash||'').slice(1);const k=M.findIndex(m=>m.id===h);if(k>=0)start=k;
+  go(start);
+}
+let loaded='';
+function fit(m){viewer.zoomTo(m.focus||{hetflag:false});if(m.focus)viewer.zoom(0.55);}
+function go(i,keepView){
+  cur=i;const m=M[i];
+  viewer.removeAllLabels();viewer.removeAllShapes();viewer.removeAllSurfaces();
+  if(loaded!==m.model){viewer.removeAllModels();viewer.addModel(PDB(m.model),'pdb');loaded=m.model;keepView=false;}
+  m.draw(viewer);
+  if(!keepView)fit(m);
+  viewer.render();
+  legend(m.legend);
+  document.querySelectorAll('.mbtn').forEach((b,j)=>b.setAttribute('aria-current',j===i));
+  document.getElementById('pick').innerHTML='Tap or click any part of the protein to name the residue.';
+  const c=document.getElementById('card');
+  c.innerHTML=`<div class="eyebrow">Mission ${i+1} of ${M.length}</div><h2>${m.name}</h2><p>${m.text}</p>
+   <div class="facts">${m.facts.map(f=>`<div class="fact"><div class="v">${f[0]}</div><div class="k">${f[1]}</div></div>`).join('')}</div>
+   <div class="task"><b>Try it.</b> ${m.task}</div>
+   <div class="q"><div class="qt">${m.q}</div><div class="opts">${m.o.map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}</div><div class="why" id="why" hidden></div></div>`;
+  c.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>{const j=+b.dataset.j;c.querySelectorAll('.opt').forEach(x=>x.classList.remove('right','wrong'));b.classList.add(j===m.a?'right':'wrong');if(j===m.a){c.querySelectorAll('.opt')[m.a].classList.add('right');done.add(i);document.querySelectorAll('.mbtn')[i].classList.add('done');}const w=document.getElementById('why');w.hidden=false;w.textContent=(j===m.a?'Correct. ':'Not quite. ')+m.why;}));
+}
+function pick(atom){
+  const m=M[cur];const rn=AA[atom.resn]||atom.resn;const kind=KIND[atom.resn]||'polar';
+  if(atom.hetflag&&!AA[atom.resn]){document.getElementById('pick').innerHTML=`<b>${atom.resn}</b> (ligand) — inhibitor E-64-c`;return;}
+  let num;
+  if(m.model==='kcas'){num=`precursor <b>${rn}${atom.resi}</b>`+(atom.resi>21?` · mature ${rn}${atom.resi-21}`:' · signal peptide')+` · pLDDT ${atom.b.toFixed(0)}`;}
+  else if(m.model==='pro'){num=atom.resi<=107?`propeptide · UniProt <b>${rn}${atom.resi+26}</b>`:`mature <b>${rn}${atom.resi-107}</b> · UniProt ${rn}${atom.resi+26}`;}
+  else{num=`mature <b>${rn}${atom.resi}</b> · UniProt ${rn}${atom.resi+133}`;}
+  const ss=atom.ss==='h'?'helix':(atom.ss==='s'?'strand':'loop');
+  document.getElementById('pick').innerHTML=`${num}<br><span style="color:var(--muted)">${kind} · ${ss}</span>`;
+}
+
+const AA3=/^(ALA|ARG|ASN|ASP|CYS|GLN|GLU|GLY|HIS|ILE|LEU|LYS|MET|PHE|PRO|SER|THR|TRP|TYR|VAL)$/;
+function filt(txt,ch,het,maxRes){return txt.split('\n').filter(l=>{const r=l.slice(0,6);if(r!=='ATOM  '&&r!=='HETATM')return false;if(ch&&l[21]!==ch)return false;const rn=l.slice(17,20);if(rn==='HOH')return false;if(r==='HETATM'&&!het.includes(rn))return false;if(l.slice(76,78).trim()==='H')return false;if(l[16]!==' '&&l[16]!=='A')return false;if(maxRes&&parseInt(l.slice(22,26))>maxRes)return false;return true;});}
+function ssl(txt,ch){return txt.split('\n').filter(l=>(l.startsWith('HELIX')&&l[19]===ch)||(l.startsWith('SHEET')&&l[21]===ch));}
+function cas(lines,off){const m={};lines.forEach(l=>{if(l.slice(12,16).trim()==='CA'&&AA3.test(l.slice(17,20))||l.slice(17,20)==='OCS'&&l.slice(12,16).trim()==='CA')m[parseInt(l.slice(22,26))-off]=[+l.slice(30,38),+l.slice(38,46),+l.slice(46,54)];});return m;}
+function superpose(ref,mov,off){const A=cas(ref,0),B=cas(mov,off),P=[],Q=[];for(let i=1;i<=212;i++)if(A[i]&&B[i]){P.push(B[i]);Q.push(A[i]);}
+ const cen=X=>X.reduce((s,p)=>[s[0]+p[0]/X.length,s[1]+p[1]/X.length,s[2]+p[2]/X.length],[0,0,0]);const cp=cen(P),cq=cen(Q);
+ const p=P.map(x=>[x[0]-cp[0],x[1]-cp[1],x[2]-cp[2]]),q=Q.map(x=>[x[0]-cq[0],x[1]-cq[1],x[2]-cq[2]]);const M=[[0,0,0],[0,0,0],[0,0,0]];
+ for(let k=0;k<p.length;k++)for(let i=0;i<3;i++)for(let j=0;j<3;j++)M[i][j]+=p[k][i]*q[k][j];
+ const [a1,a2,a3]=M[0],[b1,b2,b3]=M[1],[c1,c2,c3]=M[2];
+ const N=[[a1+b2+c3,b3-c2,c1-a3,a2-b1],[b3-c2,a1-b2-c3,a2+b1,c1+a3],[c1-a3,a2+b1,-a1+b2-c3,b3+c2],[a2-b1,c1+a3,b3+c2,-a1-b2+c3]];
+ let v=[1,0.1,0.1,0.1];for(let it=0;it<3000;it++){const w=[0,0,0,0];for(let i=0;i<4;i++)for(let j=0;j<4;j++)w[i]+=(N[i][j]+(i===j?1e4:0))*v[j];const n=Math.hypot(...w);v=w.map(x=>x/n);}
+ const [a,b,c,d]=v;const R=[[a*a+b*b-c*c-d*d,2*(b*c-a*d),2*(b*d+a*c)],[2*(b*c+a*d),a*a-b*b+c*c-d*d,2*(c*d-a*b)],[2*(b*d-a*c),2*(c*d+a*b),a*a-b*b-c*c+d*d]];
+ return mov.map(l=>{const y=[+l.slice(30,38)-cp[0],+l.slice(38,46)-cp[1],+l.slice(46,54)-cp[2]];const t=[0,1,2].map(i=>R[i][0]*y[0]+R[i][1]*y[1]+R[i][2]*y[2]+cq[i]);return l.slice(0,30)+t.map(z=>z.toFixed(3).padStart(8)).join('')+l.slice(54);});}
+async function loadAll(){
+ const get=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u);return r.text();});
+ const [p9,p1,p3,pk]=await Promise.all(['https://files.rcsb.org/download/9PAP.pdb','https://files.rcsb.org/download/1PE6.pdb','https://files.rcsb.org/download/3TNX.pdb','https://alphafold.ebi.ac.uk/files/AF-P02668-F1-model_v6.pdb'].map(get));
+ const ref=filt(p9,'A',['OCS'],212);
+ S.papain=ssl(p9,'A').concat(ref).join('\n')+'\nEND';
+ S.e64=ssl(p1,'A').concat(superpose(ref,filt(p1,'A',['E6C']),0)).join('\n')+'\nEND';
+ S.pro=ssl(p3,'A').concat(superpose(ref,filt(p3,'A',[]),107)).join('\n')+'\nEND';
+ S.kcas=filt(pk,null,[]).join('\n')+'\nEND';
+}
+function boot(){const ld=document.getElementById('load');if(!window.$3Dmol){ld.textContent='The 3D viewer could not load. Check the internet connection and reload.';return;}ld.textContent='Downloading structures from the Protein Data Bank…';loadAll().then(init).catch(()=>{ld.textContent='Could not download the structures (RCSB/AlphaFold). Check the internet connection and reload.';});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+})();
+</script>
+</body></html>
